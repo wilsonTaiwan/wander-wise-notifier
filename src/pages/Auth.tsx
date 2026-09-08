@@ -1,33 +1,33 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { usePageMeta } from "@/lib/use-page-meta";
 
-export const Route = createFileRoute("/auth")({
-  head: () => ({
-    meta: [
-      { title: "Sign in / 登入 — Flight Price Notifier" },
-      { name: "description", content: "Sign in or create an account to start tracking flight prices from Taipei." },
-      { property: "og:title", content: "Sign in / 登入 — Flight Price Notifier" },
-      { property: "og:description", content: "Sign in or create an account to start tracking flight prices from Taipei." },
-    ],
-  }),
-  component: AuthPage,
-});
+type AuthPageProps = {
+  // Lets /sign-in and /sign-up deep-link straight into the right tab of this
+  // same combined auth page; defaults to the original "/auth" behavior.
+  initialMode?: "signin" | "signup";
+};
 
-function AuthPage() {
+export default function AuthPage({ initialMode = "signin" }: AuthPageProps) {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  usePageMeta({
+    title: "Sign in / 登入 — Flight Price Notifier",
+    description: "Sign in or create an account to start tracking flight prices from Taipei.",
+  });
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/app", replace: true });
+      if (data.session) navigate("/app", { replace: true });
     });
   }, [navigate]);
 
@@ -47,7 +47,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      navigate({ to: "/app" });
+      navigate("/app");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
